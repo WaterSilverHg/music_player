@@ -26,7 +26,7 @@
 ## 🛠️ 技术栈
 
 ### 客户端
-- **框架**: Qt 6 (Core, Widgets, Multimedia, Network, Concurrent)
+- **框架**: Qt 6.8+ (Core, Widgets, Multimedia, Network)
 - **语言**: C++17
 - **媒体播放**: QMediaPlayer
 - **构建工具**: CMake
@@ -43,39 +43,38 @@
 ### 环境要求
 
 **客户端**
-- Qt 6.5+
+- Qt 6.8+
 - CMake 3.16+
 - Windows/Linux/macOS
 
 **服务器**
-- Python 3.10+
-- FFmpeg (用于音频处理)
+- Python 3.10+（必须）
+- FFmpeg（用于音频处理）
 
 ### 服务器端部署
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/your-repo/music_player.git
+git clone https://github.com/WaterSilverHg/music_player.git
 cd music_player/server
 ```
 
-2. **创建虚拟环境**
+2. **安装依赖（自动安装脚本）**
 ```bash
 # Linux/Mac
-python3 -m venv venv
-source venv/bin/activate
+chmod +x install_lyrics_service.sh
+./install_lyrics_service.sh
 
 # Windows
-python -m venv venv
-venv\Scripts\activate
+install_lyrics_service.bat
 ```
 
-3. **安装依赖**
-```bash
-pip install -r requirements.txt
-```
+安装脚本会自动：
+- 检查 Python 3.10+ 是否已安装
+- 创建虚拟环境
+- 安装所有依赖（PyTorch、Whisper、FastAPI 等）
 
-4. **安装 FFmpeg**
+3. **手动安装 FFmpeg**
 ```bash
 # Ubuntu/Debian
 sudo apt update && sudo apt install ffmpeg
@@ -87,9 +86,10 @@ brew install ffmpeg
 # 下载 FFmpeg 并添加到 PATH
 ```
 
-5. **启动服务器**
+4. **启动服务器**
 ```bash
 # Linux/Mac
+chmod +x start.sh
 ./start.sh
 
 # Windows
@@ -107,7 +107,7 @@ cd music_player/client
 
 2. **使用 Qt Creator 打开项目**
 - 打开 `CMakeLists.txt`
-- 配置构建套件（需要 Qt 6.5+）
+- 配置构建套件（需要 Qt 6.8+）
 - 构建项目
 
 3. **运行客户端**
@@ -120,7 +120,6 @@ cd music_player/client
 ```ini
 [Server]
 url=http://127.0.0.1:8080
-rtsp_port=554
 lyrics_port=8080
 
 [Local]
@@ -129,13 +128,25 @@ music_dir=./music
 
 ### 服务器配置 (config.ini)
 ```ini
-[server]
-port=8080
-max_file_size=524288000
-max_duration=600
+[api]
+secret=your_secret_key
+
+[general]
+host=127.0.0.1
+http_port=8080
 
 [whisper]
-model=base
+# Whisper 模型名称：tiny, base, small, medium, large
+model_size=base
+model_dir=./models
+
+[lyrics]
+# 歌词片段合并的最大时间间隔（秒）
+merge_max_gap=0.12
+# 歌词片段的最小长度（字符）
+merge_min_length=3
+# 是否启用歌词自动生成
+enabled=true
 ```
 
 ## 📖 使用说明
@@ -156,12 +167,17 @@ model=base
 3. 点击播放列表中的歌曲
 
 ### 上传音乐到服务器
-1. 确保服务器已启动
-2. 使用 API 上传：`POST /api/upload`
-3. 或使用客户端的上传功能
+使用 API 上传：
+```bash
+curl -X POST "http://localhost:8080/api/upload" \
+  -F "file=@your_music.mp3"
+```
 
 ### 生成歌词
-上传音乐后，服务器会自动在后台生成歌词。生成状态可通过 API 查询。
+上传音乐后，服务器会自动在后台生成歌词。生成状态可通过 API 查询：
+```bash
+curl "http://localhost:8080/api/lyrics/status/{file_id}"
+```
 
 ## 🔌 API 接口
 
@@ -178,23 +194,28 @@ model=base
 - `GET /api/lyrics/{file_id}` - 获取歌词
 - `GET /api/lyrics/status/{file_id}` - 获取歌词生成状态
 
+### 搜索接口
+- `GET /api/search?q={keyword}` - 搜索歌曲
+
 ## 📁 项目结构
 
 ```
 music_player/
 ├── client/                    # Qt 客户端
 │   ├── src/                  # 源代码
-│   ├── resources/            # 资源文件
+│   ├── resources/            # 资源文件（样式表）
 │   ├── picture/              # 图标资源
 │   └── CMakeLists.txt        # CMake 配置
 ├── server/                   # FastAPI 服务器
 │   ├── main.py               # 主入口
-│   ├── requirements.txt      # 依赖列表
-│   ├── server_files/         # 上传的音乐文件
-│   ├── lyrics/               # 生成的歌词文件
-│   ├── models/               # Whisper 模型
+│   ├── config.ini            # 配置文件
+│   ├── install_lyrics_service.sh  # Linux 安装脚本
+│   ├── install_lyrics_service.bat # Windows 安装脚本
 │   ├── start.sh              # Linux 启动脚本
 │   └── start.bat             # Windows 启动脚本
+│   ├── server_files/         # 上传的音乐文件
+│   ├── lyrics/               # 生成的歌词文件
+│   └── models/               # Whisper 模型
 └── README.md                 # 项目说明
 ```
 
@@ -207,7 +228,8 @@ music_player/
 
 ### 服务器开发
 - 修改 `main.py` 添加新功能
-- 添加新依赖到 `requirements.txt`
+- 配置文件 `config.ini` 支持热修改
+- 模型配置在 `[whisper]` 部分
 
 ## 📄 许可证
 
@@ -216,3 +238,5 @@ MIT License
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+项目地址：https://github.com/WaterSilverHg/music_player
