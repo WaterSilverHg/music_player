@@ -1,0 +1,431 @@
+/* ============================================================
+   🎵 Music Player — 深邃沉浸主题 (深蓝×紫)
+   用于营造夜晚、安静氛围，强调音乐的沉浸感
+   适合放松、古典音乐
+   ============================================================ */
+
+/* ---- 全局 ---- */
+QMainWindow {
+    background-color: #0A0817;
+    color: #E8E3F5;
+    border-radius: 10px;
+}
+
+QWidget {
+    background-color: transparent;
+    color: #E8E3F5;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+/* ---- 中央控件 ---- */
+QWidget#centralwidget {
+    background-color: #0A0817;
+}
+
+/* ---- 菜单栏 ---- */
+QMenuBar {
+    background-color: #1A1535;
+    color: #FFFFFF;
+    padding: 0px;
+    margin: 0px;
+    min-height: 30px;
+    max-height: 30px;
+}
+
+QMenuBar::item {
+    background-color: transparent;
+    padding: 0px 10px;
+    margin: 0px;
+    min-height: 30px;
+    max-height: 30px;
+}
+
+QMenuBar::item:selected {
+    background-color: #3A3565;
+}
+
+QMenu {
+    background-color: #1A1535;
+    color: #FFFFFF;
+    border: 1px solid #3A3565;
+}
+
+QMenu::item {
+    padding: 5px 20px;
+}
+
+QMenu::item:selected {
+    background-color: #3A3565;
+}
+
+/* 窗口控制按钮 */
+QPushButton#minButton,
+QPushButton#maxButton {
+    background-color: transparent;
+    color: #FFFFFF;
+    border: none;
+    font-size: 12px;
+    min-width: 40px;
+    min-height: 30px;
+    max-height: 30px;
+    padding: 0px;
+}
+
+QPushButton#minButton:hover,
+QPushButton#maxButton:hover {
+    background-color: #3A3565;
+}
+
+QPushButton#minButton:pressed,
+QPushButton#maxButton:pressed {
+    background-color: #2A2555;
+}
+
+QPushButton#closeButton {
+    background-color: transparent;
+    color: #FFFFFF;
+    border: none;
+    font-size: 12px;
+    min-width: 40px;
+    min-height: 30px;
+    max-height: 30px;
+    padding: 0px;
+}
+
+QPushButton#closeButton:hover {
+    background-color: #E81123;
+    color: #FFFFFF;
+}
+
+QPushButton#closeButton:pressed {
+    background-color: #C50F1F;
+}
+
+/* ---- 状态栏 ---- */
+QStatusBar {
+    background-color: #13102A;
+    color: #8E88B0;
+    border-top: 1px solid #2A2555;
+    font-size: 10pt;
+    padding: 2px 8px;
+}
+
+/* ---- 标签 ---- */
+QLabel {
+    color: #E8E3F5;
+    background-color: transparent;
+}
+
+QLabel#currentSongLabel {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #E8E3F5;
+    padding: 8px;
+}
+
+QLabel#currentTimeLabel,
+QLabel#totalTimeLabel {
+    color: #8E88B0;
+    font-size: 10pt;
+}
+
+QLabel#volumeLabel {
+    color: #8E88B0;
+    font-size: 10pt;
+}
+
+/* ---- 按钮 ---- */
+QPushButton {
+    background-color: #1D1945;
+    color: #C8C0E8;
+    border: 1px solid #2A2555;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12pt;
+    min-height: 32px;
+}
+
+QPushButton:hover {
+    background-color: #2A2560;
+    border-color: #4B8BFF;
+    color: #FFFFFF;
+}
+
+QPushButton:pressed {
+    background-color: #1A1540;
+    border-color: #7C6AEE;
+}
+
+QPushButton#playButton {
+    background-color: #4B8BFF;
+    color: #FFFFFF;
+    border: none;
+    font-size: 14pt;
+    font-weight: bold;
+    min-width: 64px;
+    min-height: 36px;
+    border-radius: 18px;
+}
+
+QPushButton#playButton:hover {
+    background-color: #5C9AFF;
+}
+
+QPushButton#playButton:pressed {
+    background-color: #3A7BEE;
+}
+
+QPushButton#modeSwitchButton {
+    background-color: #1D1945;
+    color: #7C6AEE;
+    border: 1px solid #7C6AEE;
+    border-radius: 14px;
+    padding: 4px 14px;
+    font-size: 11pt;
+    min-height: 28px;
+    max-height: 28px;
+}
+
+QPushButton#modeSwitchButton:hover {
+    background-color: #2A2560;
+    color: #9B8AFF;
+}
+
+/* ---- 进度条 ---- */
+QSlider::groove:horizontal {
+    background-color: #1D1945;
+    height: 6px;
+    border-radius: 3px;
+}
+
+QSlider::sub-page:horizontal {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #7C6AEE, stop:1 #4B8BFF);
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal {
+    background-color: #E8E3F5;
+    width: 14px;
+    height: 14px;
+    margin: -5px 0;
+    border-radius: 7px;
+    border: 2px solid #7C6AEE;
+}
+
+QSlider::handle:horizontal:hover {
+    background-color: #FFFFFF;
+    border-color: #4B8BFF;
+    width: 18px;
+    height: 18px;
+    margin: -7px 0;
+    border-radius: 9px;
+}
+
+/* 音量滑块 */
+QSlider#volumeSlider::groove:horizontal {
+    background-color: #1D1945;
+    height: 4px;
+    border-radius: 2px;
+}
+
+QSlider#volumeSlider::sub-page:horizontal {
+    background-color: #7C6AEE;
+    border-radius: 2px;
+}
+
+QSlider#volumeSlider::handle:horizontal {
+    width: 10px;
+    height: 10px;
+    margin: -4px 0;
+    border-radius: 5px;
+    border: 2px solid #7C6AEE;
+}
+
+/* ---- 播放列表 (QTabWidget) ---- */
+QTabWidget::pane {
+    background-color: #0D0B1E;
+    border: 1px solid #2A2555;
+    border-radius: 6px;
+}
+
+QTabBar::tab {
+    background-color: #13102A;
+    color: #8E88B0;
+    border: 1px solid #2A2555;
+    border-bottom: none;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    padding: 6px 14px;
+    margin-right: 2px;
+    font-size: 11pt;
+}
+
+QTabBar::tab:selected {
+    background-color: #1D1945;
+    color: #7C6AEE;
+    border-bottom: 2px solid #7C6AEE;
+}
+
+QTabBar::tab:hover:!selected {
+    color: #C8C0E8;
+    background-color: #1A1540;
+}
+
+/* ---- 播放列表内容 ---- */
+QListWidget {
+    background-color: #0D0B1E;
+    color: #C8C0E8;
+    border: none;
+    outline: none;
+    font-size: 12pt;
+    padding: 4px;
+}
+
+QListWidget::item {
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin: 1px 4px;
+}
+
+QListWidget::item:selected {
+    background-color: #1D1945;
+    color: #7C6AEE;
+    border-left: 2px solid #7C6AEE;
+}
+
+QListWidget::item:hover:!selected {
+    background-color: #1A1540;
+    color: #E8E3F5;
+}
+
+/* ---- 搜索浮层 ---- */
+QListWidget#searchResultList {
+    background-color: #13102A;
+    color: #E8E3F5;
+    border: 1px solid #7C6AEE;
+    border-radius: 6px;
+    padding: 4px;
+    font-size: 12pt;
+}
+
+QListWidget#searchResultList::item {
+    padding: 6px 10px;
+    border-radius: 3px;
+    margin: 1px 2px;
+}
+
+QListWidget#searchResultList::item:selected {
+    background-color: #1D1945;
+    color: #7C6AEE;
+}
+
+/* ---- 搜索框 ---- */
+QLineEdit#searchLineEdit {
+    background-color: #1D1945;
+    color: #E8E3F5;
+    border: 1px solid #2A2555;
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 12pt;
+    min-height: 28px;
+    selection-background-color: #7C6AEE;
+}
+
+QLineEdit#searchLineEdit:focus {
+    border-color: #7C6AEE;
+}
+
+QLineEdit#searchLineEdit::placeholder {
+    color: #605A80;
+}
+
+/* ---- 歌词区 ---- */
+QGroupBox#lyricsGroupBox {
+    background-color: #0D0B1E;
+    border: 1px solid #1D1945;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding-top: 16px;
+    font-size: 10pt;
+    color: #8E88B0;
+}
+
+QGroupBox#lyricsGroupBox::title {
+    subcontrol-origin: margin;
+    left: 16px;
+    padding: 2px 8px;
+    color: #8E88B0;
+}
+
+QTextBrowser#lyricsTextBrowser {
+    background-color: transparent;
+    color: #C8C0E8;
+    border: none;
+    font-size: 14pt;
+    selection-background-color: transparent;
+}
+
+/* ---- 封面区 ---- */
+QLabel#coverLabel {
+    background-color: #13102A;
+    border: 2px solid #2A2555;
+    border-radius: 12px;
+    min-width: 200px;
+    min-height: 200px;
+    max-width: 200px;
+    max-height: 200px;
+}
+
+/* ---- 滚动条 ---- */
+QScrollBar:vertical {
+    background-color: #0D0B1E;
+    width: 8px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #2A2555;
+    border-radius: 4px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #4B8BFF;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+QScrollBar:horizontal {
+    background-color: #0D0B1E;
+    height: 8px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #2A2555;
+    border-radius: 4px;
+    min-width: 30px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: #4B8BFF;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+}
+
+/* ---- 工具提示 ---- */
+QToolTip {
+    background-color: #13102A;
+    color: #E8E3F5;
+    border: 1px solid #7C6AEE;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11pt;
+}

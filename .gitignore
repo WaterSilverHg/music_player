@@ -1,0 +1,104 @@
+# Compiled build outputs
+build/
+out/
+bin/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+
+# Qt specific
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qrc.depends
+Makefile
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+.qmake.stash
+*.autogen
+*_autogen/
+.qm
+*.qm
+# Qt Creator
+CMakeLists.txt.user
+CMakeLists.txt.user.*
+# Qt build directories
+debug/
+release/
+object_script.*
+build-*/
+*.build
+
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+*.cmake
+*.ninja
+.ninja_deps
+.ninja_log
+build.ninja
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.Python
+venv/
+.env
+.venv/
+
+# Environment and configuration
+config.ini
+*.ini
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Models and data
+models/
+server_files/
+lyrics/
+playlists/
+metadata.json
+
+# Logs
+*.log
+*.out
+
+# Debug
+*.pdb
+*.dSYM/
+core
+core.*
+
+# IDE
+.claude/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+*.bak
+*.tmp
+*.temp
+
+!client/src
