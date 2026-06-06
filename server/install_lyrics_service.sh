@@ -16,22 +16,21 @@ echo "   Lyrics Service Dependency Installer"
 echo "========================================"
 echo
 
-# 1. 检查并安装 Python 3.10+
-echo -e "[1/9] ${YELLOW}Checking Python 3.10+...${NC}"
+# 1. 检查并安装 Python 3.10
+echo -e "[1/9] ${YELLOW}Checking Python 3.10...${NC}"
 PYTHON_FOUND=false
+PYTHON_VERSION=""
 
 if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
-    PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
-    PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
-    
-    if [ $PYTHON_MAJOR -ge 3 ] && [ $PYTHON_MINOR -ge 10 ]; then
+    # 精确匹配 Python 3.10.x
+    if [[ "$PYTHON_VERSION" == 3.10.* ]]; then
         PYTHON_FOUND=true
     fi
 fi
 
 if [ "$PYTHON_FOUND" = false ]; then
-    echo -e "${YELLOW}Python 3.10+ not found. Attempting to install...${NC}"
+    echo -e "${YELLOW}Python 3.10 not found. Attempting to install...${NC}"
     echo
     
     # 检测系统类型并安装 Python
@@ -54,7 +53,7 @@ if [ "$PYTHON_FOUND" = false ]; then
     else
         echo -e "${RED}[ERROR] Cannot install Python automatically.${NC}"
         echo
-        echo "Please install Python 3.10+ manually:"
+        echo "Please install Python 3.10 manually:"
         echo "  Ubuntu/Debian: sudo apt update && sudo apt install python3.10 python3.10-venv"
         echo "  CentOS/RHEL: sudo yum install python3.10"
         echo "  macOS (Homebrew): brew install python@3.10"
@@ -74,7 +73,11 @@ if [ "$PYTHON_FOUND" = false ]; then
     exit 0
 fi
 
-echo -e "${GREEN}Python $PYTHON_VERSION found.${NC}"
+if [ -n "$PYTHON_VERSION" ]; then
+    echo -e "${GREEN}Python $PYTHON_VERSION found.${NC}"
+else
+    echo -e "${RED}Python 3.10 not found.${NC}"
+fi
 echo
 
 # 2. 检查并安装 ffmpeg
