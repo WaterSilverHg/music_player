@@ -48,6 +48,8 @@ LYRICS_MERGE_MIN_LENGTH = config.getint("lyrics", "merge_min_length", fallback=3
 
 # 服务器配置
 HTTP_PORT = config.getint("general", "http_port", fallback=8080)
+PUBLIC_IP = config.get("general", "public_ip", fallback="127.0.0.1")
+BASE_URL = f"http://{PUBLIC_IP}:{HTTP_PORT}"
 
 # 配置
 UPLOAD_DIR = Path("uploads")
@@ -563,7 +565,7 @@ async def api_play(file_id: str):
         return {"code": 404, "message": "文件不存在，已从缓存中删除"}
     
     # 返回 HTTP URL，客户端可以直接访问 /stream/{file_id} 进行流式播放
-    http_url = f"http://127.0.0.1:8080/stream/{file_id}"
+    http_url = f"{BASE_URL}/stream/{file_id}"
     
     print(f"[{datetime.now()}] Play request: {file_id} -> {http_url}")
     
