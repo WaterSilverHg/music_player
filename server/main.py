@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional, Tuple, List, Dict, Any
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Response
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Response, Form
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -33,9 +33,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 加载配置文件
+# 加载配置文件（使用 UTF-8 编码）
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read("config.ini", encoding="utf-8")
 
 # Whisper 配置
 WHISPER_MODEL_SIZE = config.get("whisper", "model_size", fallback="base")
@@ -52,7 +52,9 @@ HTTP_PORT = config.getint("general", "http_port", fallback=8080)
 # 配置
 UPLOAD_DIR = Path("uploads")
 LYRICS_DIR = Path("lyrics")
+COVERS_DIR = Path("covers")
 MUSIC_DIR = Path("../music")
+SERVER_FILES_DIR = Path("server_files")
 MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
 MAX_DURATION = 10 * 60  # 10分钟
 SUPPORTED_FORMATS = {"mp3", "mp4", "m4a", "flac", "wav", "ogg", "wma"}
@@ -391,13 +393,23 @@ async def api_status():
     }
 
 @app.post("/api/upload")
-async def api_upload(file: UploadFile = File(...)):
+async def api_upload(file: UploadFile = File(...), 
+                    title: str = Form(None), 
+                    artist: str = Form(None), 
+                    album: str = Form(None),
+                    cover: UploadFile = File(None)):
     """上传音乐文件到服务器（自动生成歌词）"""
     try:
         # 验证文件格式
         file_ext = file.filename.split(".")[-1].lower() if "." in file.filename else ""
         if not file_ext or file_ext not in SUPPORTED_FORMATS:
             return {"code": 400, "message": f"不支持的文件格式: {file_ext}"}
+        
+        # 检查文件名是否重复
+        metadata = load_metadata()
+        for song_id, song_info in metadata["files"].items():
+            if song_info["name"] == file.filename:
+                return {"code": 400, "message": f"文件已存在: {file.filename}"}
         
         # 生成文件ID
         file_id = uuid.uuid4().hex[:12]
@@ -413,18 +425,35 @@ async def api_upload(file: UploadFile = File(...)):
         # 获取音频时长
         duration = get_audio_duration(str(server_file))
         
+        # 保存封面图片（如果有）
+        has_cover = False
+        if cover and cover.filename:
+            cover_ext = cover.filename.split(".")[-1].lower()
+            if cover_ext in ["jpg", "jpeg", "png", "gif", "bmp"]:
+                cover_path = COVERS_DIR / f"{file_id}.{cover_ext}"
+                with open(cover_path, "wb") as f:
+                    while chunk := await cover.read(8192):
+                        f.write(chunk)
+                has_cover = True
+        
         # 更新元数据
         metadata = load_metadata()
+        
+        # 使用用户提供的元数据，否则使用默认值
+        song_title = title.strip() if title else os.path.splitext(file.filename)[0]
+        song_artist = artist.strip() if artist else "未知艺术家"
+        song_album = album.strip() if album else "未知专辑"
+        
         song_info = {
             "id": file_id,
             "name": file.filename,
-            "title": os.path.splitext(file.filename)[0],
-            "artist": "未知艺术家",
-            "album": "未知专辑",
+            "title": song_title,
+            "artist": song_artist,
+            "album": song_album,
             "duration": duration,
             "format": file_ext,
             "size": file_size,
-            "has_cover": False,
+            "has_cover": has_cover,
             "lyrics_status": "pending",  # 等待生成
             "file_status": "ready",
             "upload_time": datetime.now().isoformat()

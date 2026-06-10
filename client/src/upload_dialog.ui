@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>UploadDialog</class>
+ <widget class="QDialog" name="UploadDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>520</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>上传音乐</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog { background-color: #13102A; }
+QLabel { color: #8E88B0; }
+QLineEdit { 
+    background-color: #1A1635; 
+    border: 1px solid #2A2555; 
+    border-radius: 8px; 
+    padding: 8px; 
+    color: white;
+}
+QLineEdit:focus { 
+    border-color: #7C6AEE; 
+}
+QPushButton { 
+    background-color: #7C6AEE; 
+    border: none; 
+    border-radius: 8px; 
+    padding: 8px 20px; 
+    color: white; 
+    font-weight: bold;
+}
+QPushButton:hover { 
+    background-color: #8B7AE6; 
+}
+QPushButton:pressed { 
+    background-color: #6B5AD4; 
+}
+QPushButton:disabled { 
+    background-color: #3A3555; 
+    color: #605A80;
+}
+QTextEdit { 
+    background-color: #1A1635; 
+    border: 1px solid #2A2555; 
+    border-radius: 8px; 
+    padding: 8px; 
+    color: white;
+}
+QTextEdit:focus { 
+    border-color: #7C6AEE; 
+}
+</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="titleLabel">
+     <property name="text">
+      <string>🎵 上传音乐</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font-size: 20pt; font-weight: bold; color: #7C6AEE;</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="fileGroup">
+     <property name="title">
+      <string>音乐文件</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QGroupBox { border: 1px solid #2A2555; border-radius: 8px; margin-top: 10px; }
+QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; padding: 0 5px; }</string>
+     </property>
+     <layout class="QVBoxLayout" name="fileLayout">
+      <item>
+       <widget class="QLineEdit" name="filePathEdit">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="placeholderText">
+         <string>请选择音乐文件...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="browseFileButton">
+        <property name="text">
+         <string>📁 选择文件</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="coverGroup">
+     <property name="title">
+      <string>封面图片</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QGroupBox { border: 1px solid #2A2555; border-radius: 8px; margin-top: 10px; }
+QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; padding: 0 5px; }</string>
+     </property>
+     <layout class="QVBoxLayout" name="coverLayout">
+      <item>
+       <widget class="QLineEdit" name="coverPathEdit">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="placeholderText">
+         <string>（可选）选择封面图片...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="browseCoverButton">
+        <property name="text">
+         <string>🖼️ 选择封面</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="coverPreview">
+        <property name="text">
+         <string>🖼️</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 48px; background-color: #1A1635; border: 2px dashed #2A2555; border-radius: 12px; padding: 20px; text-align: center;</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="infoGroup">
+     <property name="title">
+      <string>歌曲信息</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QGroupBox { border: 1px solid #2A2555; border-radius: 8px; margin-top: 10px; }
+QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; padding: 0 5px; }</string>
+     </property>
+     <layout class="QFormLayout" name="infoLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="titleLabel_2">
+        <property name="text">
+         <string>歌曲名称</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="titleEdit">
+        <property name="placeholderText">
+         <string>输入歌曲名称</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="artistLabel">
+        <property name="text">
+         <string>歌手</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="artistEdit">
+        <property name="placeholderText">
+         <string>输入歌手名称</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="albumLabel">
+        <property name="text">
+         <string>专辑</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="albumEdit">
+        <property name="placeholderText">
+         <string>输入专辑名称</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="commentLabel">
+        <property name="text">
+         <string>备注</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QTextEdit" name="commentEdit">
+        <property name="placeholderText">
+         <string>（可选）添加备注信息...</string>
+        </property>
+        <property name="maximumHeight">
+         <number>60</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttonLayout">
+     <item>
+      <widget class="QPushButton" name="cancelButton">
+       <property name="text">
+        <string>取消</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="uploadButton">
+       <property name="text">
+        <string>🚀 上传</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="10" margin="20"/>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,13 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "upload_dialog.h"
 #include "Playlist.h"
 #include "lyrics_parser.h"
-// 移除未使用的 RTSP 播放器头文件引用
-// #include "rtsp_player.h"
 #include <QVBoxLayout>
 #include <QDesktopServices>
 #include <QMouseEvent>
 #include <QHBoxLayout>
+#include <QShortcut>
 
 // 搜索浮层最大显示条数
 static const int MAX_SEARCH_RESULTS = 20;
@@ -87,46 +87,33 @@ MainWindow::MainWindow(QWidget *parent)
     lyricsTimer = new QTimer(this);
     lyricsTimer->setInterval(100);
 
-    // 初始化 UI（搜索栏、模式切换）
+    // 加载超时定时器（防止 isLoadingSong 死锁）
+    loadingTimeoutTimer = new QTimer(this);
+    loadingTimeoutTimer->setSingleShot(true);
+    loadingTimeoutTimer->setInterval(10000); // 10秒超时
+    connect(loadingTimeoutTimer, &QTimer::timeout, this, [this]() {
+        if (isLoadingSong) {
+            qDebug() << "[MainWindow] Loading timeout, resetting isLoadingSong";
+            isLoadingSong = false;
+        }
+    });
     initUI();
 
-    // 移除未使用的 RTSP 播放器初始化
-    // m_rtspPlayer = new RtspPlayer(this);
-    // connect(m_rtspPlayer, &RtspPlayer::positionChanged, this, [this](qint64 pos) {
-    //     isUpdatingProgress = true;
-    //     qDebug() << "[MainWindow] RTSP position changed:" << pos << "ms";
-    //     ui->progressBar->setValue(static_cast<int>(pos));
-    //     ui->currentTimeLabel->setText(formatTime(pos));
-    //     isUpdatingProgress = false;
-    // });
-    // connect(m_rtspPlayer, &RtspPlayer::durationChanged, this, [this](qint64 dur) {
-    //     qDebug() << "[MainWindow] RTSP duration changed:" << dur << "ms";
-    //     ui->progressBar->setRange(0, static_cast<int>(dur));
-    //     ui->totalTimeLabel->setText(formatTime(dur));
-    // });
-    // connect(m_rtspPlayer, &RtspPlayer::stateChanged, this, [this](int state) {
-    //     if (state == 1) {  // Playing
-    //         ui->playButton->setText(tr("⏸ 暂停"));
-    //         ui->progressBar->setEnabled(true);
-    //         lyricsTimer->start();
-    //     } else if (state == 2) {  // Paused
-    //         ui->playButton->setText(tr("▶ 播放"));
-    //         lyricsTimer->stop();
-    //     } else {  // Stopped
-    //         ui->playButton->setText(tr("▶ 播放"));
-    //         ui->progressBar->setEnabled(false);
-    //         lyricsTimer->stop();
-    //         // 自动切下一首
-    //         if (currentPlayMode == SingleLoopPlay && currentMode == SourceMode::Server) {
-    //             playCurrentMedia();
-    //         } else if (currentPlayMode != SinglePlay && currentMode == SourceMode::Server) {
-    //             on_nextButton_clicked();
-    //         }
-    //     }
-    // });
-    // connect(m_rtspPlayer, &RtspPlayer::errorOccurred, this, [this](const QString& err) {
-    //     QMessageBox::warning(this, tr("RTSP 播放错误"), err);
-    // });
+    // 键盘快捷键
+    QShortcut* playPauseShortcut = new QShortcut(QKeySequence(Qt::Key_Space), this);
+    connect(playPauseShortcut, &QShortcut::activated, this, &MainWindow::on_playButton_clicked);
+
+    QShortcut* seekBackShortcut = new QShortcut(QKeySequence(Qt::Key_Left), this);
+    connect(seekBackShortcut, &QShortcut::activated, this, [this]() {
+        qint64 newPos = qMax<qint64>(0, player->position() - 5000);
+        player->setPosition(newPos);
+    });
+
+    QShortcut* seekForwardShortcut = new QShortcut(QKeySequence(Qt::Key_Right), this);
+    connect(seekForwardShortcut, &QShortcut::activated, this, [this]() {
+        qint64 newPos = qMin(player->duration(), player->position() + 5000);
+        player->setPosition(newPos);
+    });
 
     // 初始化 API 客户端（自动连接服务器）
     initApiClient();
@@ -150,7 +137,7 @@ MainWindow::MainWindow(QWidget *parent)
             tr("🎵 Music Player v2.0\n\n"
                "功能：\n"
                "• 本地 / 远程双模式播放\n"
-               "• 服务器流式播放 (RTSP)\n"
+               "• 服务器 HTTP 流式播放\n"
                "• AI 歌词自动生成\n"
                "• 多播放列表管理\n"
                "• 深邃沉浸主题"));
@@ -189,6 +176,9 @@ void MainWindow::on_actionImport_Lyrics_triggered()
     if (!lyricsFilePath.isEmpty()) {
         // 加载选中的歌词文件
         loadLyricsFromFile(lyricsFilePath);
+        
+        // 设置标志：用户手动导入了歌词（优先级高于服务器歌词）
+        userLyricsImported = true;
         
         // 显示成功提示
         QMessageBox::information(this, tr("导入成功"), tr("歌词文件已成功导入"));
@@ -286,6 +276,13 @@ void MainWindow::loadAllPlaylists()
             setupPlaylistListWidget(newTab);
             ui->playlistTabWidget->addTab(newTab, playlist->name());
         }
+    }
+
+    // 如果没有加载任何标签页，创建一个默认标签页
+    if (ui->playlistTabWidget->count() == 0) {
+        QListWidget *defaultTab = new QListWidget();
+        setupPlaylistListWidget(defaultTab);
+        ui->playlistTabWidget->addTab(defaultTab, tr("播放列表"));
     }
 
     ui->playlistTabWidget->setCurrentIndex(0);
@@ -444,6 +441,11 @@ void MainWindow::updatePlayerStatus(QMediaPlayer::PlaybackState state)
 
     if (state == QMediaPlayer::StoppedState) {
         ui->progressBar->setEnabled(false);
+        // 如果正在处理错误，跳过自动切歌（防止竞态）
+        if (isHandlingError) {
+            qDebug() << "[MainWindow] StoppedState ignored: handling error";
+            return;
+        }
         if (currentPlayMode == SingleLoopPlay)
             playCurrentMedia();
         else if (currentPlayMode != SinglePlay)
@@ -669,11 +671,12 @@ void MainWindow::setupPlaylistListWidget(QListWidget* widget)
 
     // 连接双击播放信号（使用 Qt::UserRole 中的真实索引）
     connect(widget, &QListWidget::doubleClicked, [this, widget](const QModelIndex& index) {
-        static int doubleClickCount = 0;
-        doubleClickCount++;
-        qDebug() << "[MainWindow] Double-click triggered, count:" << doubleClickCount 
-                 << ", widget:" << (void*)widget << ", row:" << index.row();
-        
+        // 防止快速双击
+        if (isLoadingSong) {
+            qDebug() << "[MainWindow] Double-click ignored: already loading a song";
+            return;
+        }
+
         if (!index.isValid()) return;
 
         QListWidgetItem* item = widget->item(index.row());
@@ -757,7 +760,12 @@ void MainWindow::showPlaylistContextMenu(const QPoint& pos)
     QListWidgetItem* item = widget->itemAt(pos);
 
     if (selected == playAction && item) {
-        // 播放该项
+        // 播放该项（检查加载锁）
+        if (isLoadingSong) {
+            qDebug() << "[MainWindow] Play action ignored: already loading a song";
+            return;
+        }
+        
         bool ok = false;
         int realIndex = item->data(Qt::UserRole).toInt(&ok);
         if (ok) {
@@ -846,8 +854,20 @@ void MainWindow::addFilesToPlaylist(const QStringList &fileNames)
                                 tr("已创建新播放列表 \"%1\"").arg(defaultName));
     }
     
+    // 确保至少有一个标签页存在
+    if (ui->playlistTabWidget->count() == 0) {
+        QListWidget *defaultTab = new QListWidget();
+        setupPlaylistListWidget(defaultTab);
+        ui->playlistTabWidget->addTab(defaultTab, tr("播放列表"));
+        ui->playlistTabWidget->setCurrentIndex(0);
+    }
+    
     auto currentWidget = qobject_cast<QListWidget*>(ui->playlistTabWidget->currentWidget());
-    if (!currentWidget) return;
+    if (!currentWidget) {
+        // 如果仍然无法获取当前标签页，使用第一个标签页
+        currentWidget = qobject_cast<QListWidget*>(ui->playlistTabWidget->widget(0));
+        if (!currentWidget) return;
+    }
     
     int addedCount = 0;  // 记录新增的文件数量
     int duplicateCount = 0;  // 记录重复的文件数量
@@ -1046,6 +1066,9 @@ void MainWindow::playCurrentMedia()
             );
             ui->coverLabel->setText("🌐");
 
+            // 设置加载锁并启动超时定时器
+            isLoadingSong = true;
+            loadingTimeoutTimer->start(); // 10秒超时保护
             // 请求服务器推流
             ApiClient::instance()->requestPlay(songId);
             return;
@@ -1055,6 +1078,9 @@ void MainWindow::playCurrentMedia()
     // 本地文件播放
     player->setSource(QUrl::fromLocalFile(filePath));
     player->play();
+
+    // 播放成功，重置连续失败计数
+    consecutivePlayFailures = 0;
 
     // 更新歌曲信息
     QFileInfo fileInfo(filePath);
@@ -1197,6 +1223,7 @@ void MainWindow::clearLyricsDisplay()
     currentLyrics.clear();
     currentLyricsFilePath.clear();
     prevLyricHighlight = -1;
+    userLyricsImported = false;  // 重置用户导入标志（切换歌曲后重新开始）
     ui->lyricsTextBrowser->setHtml(
         "<p align='center' style='color:#8E88B0; font-size:14pt; margin-top:40px;'>"
         "🎶 歌词将在播放时显示</p>");
@@ -1217,15 +1244,35 @@ void MainWindow::on_lyricsTimer_timeout()
 void MainWindow::handlePlayerError(QMediaPlayer::Error error)
 {
     if (error != QMediaPlayer::NoError) {
+        // 设置错误处理标志，防止 updatePlayerStatus 竞态切歌
+        isHandlingError = true;
+        
         qDebug() << "Player error occurred:" << error << "Error string:" << player->errorString();
 
         Playlist *currentPlaylist = getCurrentPlaylist();
-        if (!currentPlaylist) return;
+        if (!currentPlaylist) {
+            isHandlingError = false;
+            return;
+        }
 
         int currentIndex = currentPlaylist->currentIndex();
         if (currentIndex >= 0 && currentIndex < currentPlaylist->mediaCount()) {
             QString failedFilePath = currentPlaylist->filePath(currentIndex);
             QString failedFileName = QFileInfo(failedFilePath).fileName();
+
+            // 增加连续失败计数（circuit breaker）
+            consecutivePlayFailures++;
+
+            // 检查是否超过最大连续失败次数
+            if (consecutivePlayFailures >= MAX_CONSECUTIVE_FAILURES) {
+                QMessageBox::warning(this, tr("播放失败"), tr("连续多次播放失败，请检查网络连接或稍后重试"));
+                consecutivePlayFailures = 0;  // 重置计数器
+                // 重置加载锁，防止用户被锁住
+                isLoadingSong = false;
+                loadingTimeoutTimer->stop();
+                isHandlingError = false;
+                return;
+            }
 
             if (error == QMediaPlayer::ResourceError || error == QMediaPlayer::FormatError) {
                 if (!QFile::exists(failedFilePath)) {
@@ -1287,6 +1334,9 @@ void MainWindow::handlePlayerError(QMediaPlayer::Error error)
                 }
             }
         }
+        
+        // 重置错误处理标志
+        isHandlingError = false;
     }
 }
 
@@ -1377,6 +1427,7 @@ void MainWindow::initUI()
     // 搜索框（从 UI 文件获取）
     // 注意：on_searchLineEdit_textChanged 和 on_searchLineEdit_returnPressed 会被 Qt 自动连接
     searchLineEdit = ui->searchLineEdit;
+    searchLineEdit->installEventFilter(this);  // 安装事件过滤器，用于检测失焦
 
     // 搜索结果浮层（仍需动态创建，因为是弹出窗口）
     searchResultList = new QListWidget(this);
@@ -1428,7 +1479,13 @@ void MainWindow::initUI()
                 currentWidget->addItem(item);
             }
 
-            // 请求服务器推流
+            // 请求服务器推流（检查加载锁）
+            if (isLoadingSong) {
+                qDebug() << "[MainWindow] Search result play ignored: already loading a song";
+                return;
+            }
+            isLoadingSong = true;
+            loadingTimeoutTimer->start(); // 10秒超时保护
             ApiClient::instance()->requestPlay(songId);
         } else {
             // 本地歌曲
@@ -1464,7 +1521,10 @@ void MainWindow::initApiClient()
     connect(ApiClient::instance(), &ApiClient::serverFilesReceived, this, &MainWindow::onServerFilesReceived);
     connect(ApiClient::instance(), &ApiClient::searchResultReceived, this, &MainWindow::onSearchResultReceived);
     connect(ApiClient::instance(), &ApiClient::streamUrlReady, this, &MainWindow::onStreamUrlReady);
+    connect(ApiClient::instance(), &ApiClient::uploadProgress, this, &MainWindow::onUploadProgress);
     connect(ApiClient::instance(), &ApiClient::uploadFinished, this, &MainWindow::onUploadFinished);
+    connect(ApiClient::instance(), &ApiClient::downloadProgress, this, &MainWindow::onDownloadProgress);
+    connect(ApiClient::instance(), &ApiClient::downloadFinished, this, &MainWindow::onDownloadFinished);
     connect(ApiClient::instance(), &ApiClient::lyricsReady, this, &MainWindow::onLyricsReady);
     connect(ApiClient::instance(), &ApiClient::lyricsStatus, this, &MainWindow::onLyricsStatus);
     connect(ApiClient::instance(), &ApiClient::coverReady, this, &MainWindow::onCoverReady);
@@ -1509,9 +1569,7 @@ void MainWindow::setSourceMode(SourceMode mode)
         player->playbackState() == QMediaPlayer::PausedState) {
         player->stop();
     }
-    // 移除未使用的 RtspPlayer 调用
-    // m_rtspPlayer->stop();
-    currentRtspUrl.clear();
+    currentStreamUrl.clear();
     currentRemoteId.clear();
 
     // 重置进度条和UI
@@ -1804,14 +1862,14 @@ QString MainWindow::findPathByDisplayName(const Playlist* playlist, const QStrin
 
 void MainWindow::on_actionUpload_File_triggered()
 {
-    // 自动连接模式下，如果服务器不可达，ApiClient 会通过 errorOccurred 信号反馈
-    QString filePath = QFileDialog::getOpenFileName(
-        this, tr("选择要上传的音乐文件"), QDir::homePath(),
-        tr("音频文件 (*.mp3 *.mp4 *.m4a *.flac *.wav *.aac *.ogg *.wma *.opus);;所有文件 (*.*)"));
-
-    if (!filePath.isEmpty()) {
-        ApiClient::instance()->uploadFile(filePath);
-        statusBar()->showMessage(tr("正在上传: %1").arg(QFileInfo(filePath).fileName()));
+    // 显示上传对话框
+    UploadDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        UploadInfo info = dialog.getUploadInfo();
+        
+        // 调用 API 上传文件（包含额外信息）
+        ApiClient::instance()->uploadFile(info.filePath, info.title, info.artist, info.album, info.coverPath);
+        statusBar()->showMessage(tr("正在上传: %1").arg(QFileInfo(info.filePath).fileName()));
     }
 }
 
@@ -1860,6 +1918,41 @@ void MainWindow::on_actionDownload_File_triggered()
     }
 }
 
+void MainWindow::onUploadProgress(qint64 sent, qint64 total)
+{
+    if (total > 0) {
+        int percent = static_cast<int>(sent * 100 / total);
+        double sentMB = sent / (1024.0 * 1024.0);
+        double totalMB = total / (1024.0 * 1024.0);
+        statusBar()->showMessage(tr("📤 上传中: %1% (%2 MB / %3 MB)")
+            .arg(percent)
+            .arg(sentMB, 0, 'f', 1)
+            .arg(totalMB, 0, 'f', 1));
+    }
+}
+
+void MainWindow::onDownloadProgress(qint64 received, qint64 total)
+{
+    if (total > 0) {
+        int percent = static_cast<int>(received * 100 / total);
+        double recvMB = received / (1024.0 * 1024.0);
+        double totalMB = total / (1024.0 * 1024.0);
+        statusBar()->showMessage(tr("📥 下载中: %1% (%2 MB / %3 MB)")
+            .arg(percent)
+            .arg(recvMB, 0, 'f', 1)
+            .arg(totalMB, 0, 'f', 1));
+    }
+}
+
+void MainWindow::onDownloadFinished(bool success, const QString& localPath)
+{
+    if (success) {
+        statusBar()->showMessage(tr("✅ 下载完成: %1").arg(QFileInfo(localPath).fileName()), 5000);
+    } else {
+        QMessageBox::warning(this, tr("下载失败"), tr("文件下载失败"));
+    }
+}
+
 void MainWindow::onUploadFinished(bool success, const QString& fileId, const QString& fileName)
 {
     if (success) {
@@ -1871,9 +1964,13 @@ void MainWindow::onUploadFinished(bool success, const QString& fileId, const QSt
     }
 }
 
-// ---- RTSP 播放 ----
+// ---- HTTP 流式播放 ----
 
 void MainWindow::onStreamUrlReady(const QString& remoteId, const QString& streamUrl) {
+    // 释放加载锁（请求已完成）并停止超时定时器
+    isLoadingSong = false;
+    loadingTimeoutTimer->stop();
+    
     qDebug() << "[MainWindow] Stream URL ready:" << streamUrl;
     if (streamUrl.isEmpty()) {
         // 增加连续失败计数
@@ -1911,11 +2008,8 @@ void MainWindow::onStreamUrlReady(const QString& remoteId, const QString& stream
 
 void MainWindow::playRemoteSong(const QString& remoteId, const QString& streamUrl)
 {
-    currentRtspUrl = streamUrl;
+    currentStreamUrl = streamUrl;
     currentRemoteId = remoteId;
-
-    // 移除未使用的 RtspPlayer 调用
-    // m_rtspPlayer->stop();
 
     // 查找歌曲信息（从缓存中）
     for (const auto& info : serverFileCache) {
@@ -1937,6 +2031,9 @@ void MainWindow::playRemoteSong(const QString& remoteId, const QString& streamUr
     player->setSource(QUrl(streamUrl));
     player->play();
 
+    // 播放成功，重置连续失败计数
+    consecutivePlayFailures = 0;
+
     // 下载歌词和封面
     ApiClient::instance()->downloadLyrics(remoteId);
     ApiClient::instance()->downloadCover(remoteId);
@@ -1949,6 +2046,12 @@ void MainWindow::playRemoteSong(const QString& remoteId, const QString& streamUr
 void MainWindow::onLyricsReady(const QString& remoteId, const QByteArray& lrcData)
 {
     Q_UNUSED(remoteId);
+
+    // 如果用户已经手动导入了歌词，则跳过服务器歌词（用户导入优先）
+    if (userLyricsImported) {
+        qDebug() << "[MainWindow] User has imported lyrics, skipping server lyrics";
+        return;
+    }
 
     // 保存到临时文件并加载
     QString tempPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
@@ -2001,6 +2104,17 @@ void MainWindow::onApiErrorOccurred(const QString& errorMsg)
 
 bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 {
+    // 搜索框失焦时隐藏搜索结果浮层
+    if (obj == searchLineEdit && event->type() == QEvent::FocusOut) {
+        // 延迟隐藏，避免点击搜索结果时先触发失焦
+        QTimer::singleShot(200, this, [this]() {
+            // 检查焦点是否转移到了搜索结果列表
+            if (!searchResultList->hasFocus() && !searchLineEdit->hasFocus()) {
+                hideSearchResults();
+            }
+        });
+    }
+
     if (obj == menuBar()) {
         QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
         if (event->type() == QEvent::MouseButtonPress) {

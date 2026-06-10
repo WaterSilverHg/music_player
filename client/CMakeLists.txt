@@ -51,8 +51,7 @@ set(SOURCES
     src/config_manager.cpp
     src/lyrics_generator.cpp
     src/lyrics_parser.cpp
-    # 移除未使用的 RTSP 相关文件
-    # src/rtsp_player.cpp
+    src/upload_dialog.cpp
 )
 
 set(HEADERS
@@ -63,9 +62,8 @@ set(HEADERS
     src/config_manager.h
     src/lyrics_generator.h
     src/lyrics_parser.h
-    # 移除未使用的 RTSP 相关文件
-    # src/rtsp_player.h
     src/Playlist.h
+    src/upload_dialog.h
     src/global.h
 )
 
@@ -75,6 +73,7 @@ set(RESOURCES
 
 set(FORMS
     src/mainwindow.ui
+    src/upload_dialog.ui
 )
 
 # ---- 可执行文件 ----
@@ -133,6 +132,23 @@ set_target_properties(MusicPlayerClient PROPERTIES
 if(MSVC)
     target_compile_options(MusicPlayerClient PRIVATE /W3 /utf-8 /D_CRT_SECURE_NO_WARNINGS)
     target_link_options(MusicPlayerClient PRIVATE /STACK:8388608)
+endif()
+
+# ---- 子系统设置 ----
+# Debug 模式：显示控制台（可以看到 qDebug 输出）
+# Release 模式：隐藏控制台（纯 GUI 应用）
+if(MSVC)
+    set_target_properties(MusicPlayerClient PROPERTIES
+        DEBUG_POSTFIX ""
+        RELEASE_POSTFIX ""
+    )
+    
+    # Release 模式设置子系统为 WINDOWS（不显示命令行）
+    # Debug 模式保持 CONSOLE（方便查看 qDebug 输出）
+    target_link_options(MusicPlayerClient PRIVATE
+        $<$<CONFIG:Release>:/SUBSYSTEM:WINDOWS>
+        $<$<CONFIG:Release>:/ENTRY:mainCRTStartup>
+    )
 endif()
 
 # ---- Qt 部署 ----

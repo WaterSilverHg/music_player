@@ -16,24 +16,15 @@ echo "   Lyrics Service Dependency Installer"
 echo "========================================"
 echo
 
-# 1. 检查并安装 Python 3.10
+# 1. 检查并安装 Python 3.10（强制使用 python3.10）
 echo -e "[1/9] ${YELLOW}Checking Python 3.10...${NC}"
-PYTHON_FOUND=false
-PYTHON_VERSION=""
 
-if command -v python3 &> /dev/null; then
-    PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
-    # 精确匹配 Python 3.10.x
-    if [[ "$PYTHON_VERSION" == 3.10.* ]]; then
-        PYTHON_FOUND=true
-    fi
-fi
-
-if [ "$PYTHON_FOUND" = false ]; then
+# 直接检查 python3.10 命令是否存在
+if ! command -v python3.10 &> /dev/null; then
     echo -e "${YELLOW}Python 3.10 not found. Attempting to install...${NC}"
     echo
     
-    # 检测系统类型并安装 Python
+    # 检测系统类型并安装 Python 3.10
     if command -v apt-get &> /dev/null; then
         echo "Detected: Ubuntu/Debian"
         echo "Installing Python 3.10 via apt..."
@@ -73,11 +64,8 @@ if [ "$PYTHON_FOUND" = false ]; then
     exit 0
 fi
 
-if [ -n "$PYTHON_VERSION" ]; then
-    echo -e "${GREEN}Python $PYTHON_VERSION found.${NC}"
-else
-    echo -e "${RED}Python 3.10 not found.${NC}"
-fi
+PYTHON_VERSION=$(python3.10 --version | cut -d' ' -f2)
+echo -e "${GREEN}Python $PYTHON_VERSION found.${NC}"
 echo
 
 # 2. 检查并安装 ffmpeg
@@ -121,18 +109,18 @@ else
 fi
 echo
 
-# 3. 创建虚拟环境
+# 3. 创建虚拟环境（使用 python3.10）
 echo -e "[3/9] ${YELLOW}Creating virtual environment...${NC}"
 if [ -d "venv" ]; then
     echo "Removing existing venv..."
     rm -rf venv
 fi
 
-python3 -m venv venv
+python3.10 -m venv venv
 if [ $? -ne 0 ]; then
     echo -e "${RED}[ERROR] Failed to create virtual environment.${NC}"
     echo
-    echo "Make sure python3-venv is installed:"
+    echo "Make sure python3.10-venv is installed:"
     echo "  Ubuntu/Debian: sudo apt install python3.10-venv"
     exit 1
 fi

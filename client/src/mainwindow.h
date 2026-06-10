@@ -5,7 +5,6 @@
 #include "lyrics_parser.h"
 #include "apiclient.h"
 #include "config_manager.h"
-#include "rtsp_player.h"
 #include "Playlist.h"
 
 QT_BEGIN_NAMESPACE
@@ -97,7 +96,10 @@ private slots:
     void onServerDisconnected();
     void onServerFilesReceived(const QList<RemoteSongInfo>& files);
     void onSearchResultReceived(const QList<RemoteSongInfo>& results);
-    void onStreamUrlReady(const QString& remoteId, const QString& rtspUrl);
+    void onStreamUrlReady(const QString& remoteId, const QString& streamUrl);
+    void onUploadProgress(qint64 sent, qint64 total);
+    void onDownloadProgress(qint64 received, qint64 total);
+    void onDownloadFinished(bool success, const QString& localPath);
     void onUploadFinished(bool success, const QString& fileId, const QString& fileName);
     void onLyricsReady(const QString& remoteId, const QByteArray& lrcData);
     void onLyricsStatus(const QString& remoteId, const QString& status);
@@ -114,6 +116,7 @@ private:
     PlayMode currentPlayMode;
     bool isUpdatingProgress;
     bool wasPlayingBeforeSeek = false;  // 拖动进度条前是否正在播放
+    bool isLoadingSong = false;         // 正在加载歌曲（防止快速双击）
 
     // 音源模式
     SourceMode currentMode = SourceMode::Local;
@@ -121,6 +124,7 @@ private:
     // 播放失败保护
     int consecutivePlayFailures = 0;  // 连续播放失败次数
     const int MAX_CONSECUTIVE_FAILURES = 3;  // 最大连续失败次数
+    bool isHandlingError = false;     // 正在处理播放错误（防止竞态）
 
     // 搜索控件
     QLineEdit* searchLineEdit;
@@ -133,17 +137,18 @@ private:
 
     // 歌词（仅用于显示，生成由服务端完成）
     QTimer *lyricsTimer;
+    QTimer *loadingTimeoutTimer;      // 加载超时定时器，防止 isLoadingSong 死锁
     LyricsParser lyricsParser;
     QList<LyricLine> currentLyrics;
     QString currentLyricsFilePath;
     int prevLyricHighlight = -1;      // 上一次高亮的歌词行索引
 
-    // 移除未使用的 RTSP 播放器
-    // RtspPlayer* m_rtspPlayer = nullptr;
-
     // 当前播放的服务器歌曲 URL（HTTP）
-    QString currentRtspUrl;
+    QString currentStreamUrl;
     QString currentRemoteId;
+    
+    // 歌词优先级标志：用户手动导入的歌词优先于服务器歌词
+    bool userLyricsImported = false;
 
     // ---- 辅助方法 ----
     void addFilesToPlaylist(const QStringList &fileNames);
@@ -154,7 +159,7 @@ private:
     int getCurrentPlaylistIndex();
     Playlist* getCurrentPlaylist();
     void playCurrentMedia();
-    void playRemoteSong(const QString& remoteId, const QString& rtspUrl);
+    void playRemoteSong(const QString& remoteId, const QString& streamUrl);
 
     // 持久化
     void saveAllPlaylists();

@@ -5,11 +5,11 @@ echo   Music Player Server Startup
 echo ========================================
 echo.
 
-REM 设置工作目录为脚本所在目录
+REM Set working directory to script location
 cd /d "%~dp0"
 
-REM 1. 检查 Python 3.10+
-echo [1/3] Checking Python 3.10+...
+REM 1. Check Python 3.10+
+echo [1/4] Checking Python 3.10+...
 py -3.10 --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python 3.10 not found!
@@ -27,8 +27,8 @@ for /f "tokens=2" %%i in ('py -3.10 --version') do set PYTHON_VERSION=%%i
 echo Python %PYTHON_VERSION% found.
 echo.
 
-REM 2. 检查虚拟环境是否存在
-echo [2/3] Checking virtual environment...
+REM 2. Check virtual environment
+echo [2/4] Checking virtual environment...
 if not exist "venv" (
     echo [ERROR] Virtual environment 'venv' not found!
     echo.
@@ -41,10 +41,29 @@ if not exist "venv" (
 echo Virtual environment found.
 echo.
 
-REM 3. 激活虚拟环境并启动服务器
-echo [3/3] Starting server...
+REM 3. Check and install dependencies
+echo [3/4] Checking dependencies...
 call venv\Scripts\activate
 
+venv\Scripts\python.exe -c "import fastapi, uvicorn, multipart, pydantic, pydub, torch, whisper" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [WARNING] Some dependencies are missing. Installing...
+    set PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+    set PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn
+    venv\Scripts\python.exe -m pip install fastapi uvicorn python-multipart pydantic pydub torch==2.1.2 "numpy<2" openai-whisper --index-url %PIP_INDEX_URL% --trusted-host %PIP_TRUSTED_HOST%
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to install dependencies.
+        pause
+        exit /b 1
+    )
+    echo Dependencies installed.
+) else (
+    echo All dependencies found.
+)
+echo.
+
+REM 4. Start server
+echo [4/4] Starting server...
 echo [%date% %time%] Starting Music Player Server...
-py -3.10 main.py
+venv\Scripts\python.exe main.py
 pause

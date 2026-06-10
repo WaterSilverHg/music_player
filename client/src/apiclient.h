@@ -55,8 +55,13 @@ public:
     // 检查服务器状态
     void checkStatus();
 
-    // 上传文件
+    // 上传文件（简单版本）
     void uploadFile(const QString& localFilePath);
+    
+    // 上传文件（带元数据版本）
+    void uploadFile(const QString& localFilePath, const QString& title, 
+                    const QString& artist, const QString& album, 
+                    const QString& coverPath = QString());
 
     // 下载文件
     void downloadFile(const QString& remoteId, const QString& savePath);

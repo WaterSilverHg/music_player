@@ -15,12 +15,12 @@ echo
 # 设置工作目录为脚本所在目录
 cd "$(dirname "$0")"
 
-# 检查 Python 3.10+ 是否已安装
-echo -e "${YELLOW}[1/3] Checking Python 3.10+...${NC}"
-if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}[ERROR] Python 3 not found!${NC}"
+# 检查 Python 3.10 是否已安装（强制使用 python3.10）
+echo -e "${YELLOW}[1/3] Checking Python 3.10...${NC}"
+if ! command -v python3.10 &> /dev/null; then
+    echo -e "${RED}[ERROR] Python 3.10 not found!${NC}"
     echo
-    echo "Please install Python 3.10 or higher:"
+    echo "Please install Python 3.10:"
     echo "  Ubuntu/Debian: sudo apt update && sudo apt install python3.10"
     echo "  CentOS/RHEL: sudo yum install python3.10"
     echo "  macOS (Homebrew): brew install python@3.10"
@@ -30,20 +30,7 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
-PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
-PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
-
-if [ $PYTHON_MAJOR -lt 3 ] || ([ $PYTHON_MAJOR -eq 3 ] && [ $PYTHON_MINOR -lt 10 ]); then
-    echo -e "${RED}[ERROR] Python version $PYTHON_VERSION is too old!${NC}"
-    echo "Required: Python 3.10 or higher"
-    echo
-    echo "Please upgrade Python:"
-    echo "  Ubuntu/Debian: sudo apt update && sudo apt install python3.10"
-    echo "  macOS (Homebrew): brew install python@3.10"
-    exit 1
-fi
-
+PYTHON_VERSION=$(python3.10 --version | cut -d' ' -f2)
 echo -e "${GREEN}Python $PYTHON_VERSION found.${NC}"
 echo
 

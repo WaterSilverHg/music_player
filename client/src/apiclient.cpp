@@ -104,6 +104,12 @@ void ApiClient::checkStatus() {
 }
 
 void ApiClient::uploadFile(const QString& localFilePath) {
+    uploadFile(localFilePath, QString(), QString(), QString(), QString());
+}
+
+void ApiClient::uploadFile(const QString& localFilePath, const QString& title,
+                           const QString& artist, const QString& album,
+                           const QString& coverPath) {
     QFileInfo fi(localFilePath);
     if (!fi.exists()) {
         emit errorOccurred(QString("文件不存在: %1").arg(localFilePath));
@@ -123,6 +129,7 @@ void ApiClient::uploadFile(const QString& localFilePath) {
     // 构建 multipart 请求
     QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
+    // 添加音乐文件
     QHttpPart filePart;
     filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
                        QString("form-data; name=\"file\"; filename=\"%1\"").arg(fi.fileName()));
@@ -135,8 +142,51 @@ void ApiClient::uploadFile(const QString& localFilePath) {
     file->open(QIODevice::ReadOnly);
     filePart.setBodyDevice(file);
     file->setParent(multiPart);  // multiPart 销毁时自动删除 file
-
     multiPart->append(filePart);
+
+    // 添加元数据
+    if (!title.isEmpty()) {
+        QHttpPart titlePart;
+        titlePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                           "form-data; name=\"title\"");
+        titlePart.setBody(title.toUtf8());
+        multiPart->append(titlePart);
+    }
+
+    if (!artist.isEmpty()) {
+        QHttpPart artistPart;
+        artistPart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                            "form-data; name=\"artist\"");
+        artistPart.setBody(artist.toUtf8());
+        multiPart->append(artistPart);
+    }
+
+    if (!album.isEmpty()) {
+        QHttpPart albumPart;
+        albumPart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                           "form-data; name=\"album\"");
+        albumPart.setBody(album.toUtf8());
+        multiPart->append(albumPart);
+    }
+
+    // 添加封面图片（如果有）
+    if (!coverPath.isEmpty()) {
+        QFileInfo coverFi(coverPath);
+        if (coverFi.exists()) {
+            QHttpPart coverPart;
+            coverPart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                               QString("form-data; name=\"cover\"; filename=\"%1\"").arg(coverFi.fileName()));
+            
+            QString coverMimeType = mimeDb.mimeTypeForFile(coverPath).name();
+            coverPart.setHeader(QNetworkRequest::ContentTypeHeader, coverMimeType);
+
+            QFile* coverFile = new QFile(coverPath);
+            coverFile->open(QIODevice::ReadOnly);
+            coverPart.setBodyDevice(coverFile);
+            coverFile->setParent(multiPart);
+            multiPart->append(coverPart);
+        }
+    }
 
     QNetworkRequest req(QUrl(m_baseUrl + "/api/upload"));
     QNetworkReply* reply = m_nam->post(req, multiPart);
