@@ -90,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 加载超时定时器（防止 isLoadingSong 死锁）
     loadingTimeoutTimer = new QTimer(this);
     loadingTimeoutTimer->setSingleShot(true);
-    loadingTimeoutTimer->setInterval(10000); // 10秒超时
+    loadingTimeoutTimer->setInterval(DefaultClientConfig::LOAD_SONG_TIMEOUT);
     connect(loadingTimeoutTimer, &QTimer::timeout, this, [this]() {
         if (isLoadingSong) {
             qDebug() << "[MainWindow] Loading timeout, resetting isLoadingSong";
@@ -1264,7 +1264,7 @@ void MainWindow::handlePlayerError(QMediaPlayer::Error error)
             consecutivePlayFailures++;
 
             // 检查是否超过最大连续失败次数
-            if (consecutivePlayFailures >= MAX_CONSECUTIVE_FAILURES) {
+            if (consecutivePlayFailures >= DefaultClientConfig::MAX_CONSECUTIVE_FAILURES) {
                 QMessageBox::warning(this, tr("播放失败"), tr("连续多次播放失败，请检查网络连接或稍后重试"));
                 consecutivePlayFailures = 0;  // 重置计数器
                 // 重置加载锁，防止用户被锁住
@@ -1977,7 +1977,7 @@ void MainWindow::onStreamUrlReady(const QString& remoteId, const QString& stream
         consecutivePlayFailures++;
 
         // 检查是否超过最大连续失败次数
-        if (consecutivePlayFailures >= MAX_CONSECUTIVE_FAILURES) {
+        if (consecutivePlayFailures >= DefaultClientConfig::MAX_CONSECUTIVE_FAILURES) {
             QMessageBox::warning(this, tr("播放失败"), tr("连续多次播放失败，请检查网络连接或稍后重试"));
             consecutivePlayFailures = 0;  // 重置计数器
             return;

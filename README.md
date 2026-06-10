@@ -126,13 +126,16 @@ lyrics_port=8080
 music_dir=./music
 ```
 
+**上线部署时需修改：**
+- `Server/url`：修改为实际服务器 IP 地址和端口
+
 ### 服务器配置 (config.ini)
 ```ini
 [api]
 secret=your_secret_key
 
 [general]
-host=127.0.0.1
+host=0.0.0.0  # 生产环境改为 0.0.0.0 允许外部访问
 http_port=8080
 
 [whisper]
@@ -148,6 +151,30 @@ merge_min_length=3
 # 是否启用歌词自动生成
 enabled=true
 ```
+
+**上线部署时需修改：**
+- `general/host`：生产环境改为 `0.0.0.0` 允许外部访问
+- `api/secret`：修改为强随机密钥
+
+### 客户端常量配置 (global.h)
+
+```cpp
+// 服务器配置（上线时修改）
+namespace DefaultServerConfig {
+    constexpr const char* DEFAULT_API_HOST = "127.0.0.1";  // 改为实际服务器 IP
+    constexpr int DEFAULT_API_PORT = 8080;
+    constexpr int DEFAULT_LYRICS_PORT = 8080;
+}
+
+// 客户端配置
+namespace DefaultClientConfig {
+    constexpr qint64 MAX_UPLOAD_SIZE = 30 * 1024 * 1024;  // 上传大小限制
+    constexpr int MAX_CONSECUTIVE_FAILURES = 3;          // 最大连续失败次数
+}
+```
+
+**上线部署时需修改：**
+- `DefaultServerConfig::DEFAULT_API_HOST`：修改为实际服务器 IP 地址
 
 ## 📖 使用说明
 

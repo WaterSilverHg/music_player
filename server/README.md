@@ -6,7 +6,7 @@
 
 - 支持多种音频格式：MP3、MP4、M4A、FLAC、WAV、OGG、WMA
 - 使用 Whisper 模型进行高精度语音识别
-- 支持长音频分段处理（超过10分钟自动分段）
+- 支持长音频分段处理（超过 10 分钟自动分段）
 - 生成带时间戳的 LRC 格式歌词
 - 自动检测音频语言
 - 支持 CORS 跨域访问
@@ -44,10 +44,10 @@ python -c "from faster_whisper import WhisperModel; model = WhisperModel('base',
 python main.py
 
 # 生产模式（使用 uvicorn）
-uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn main:app --host 0.0.0.0 --port 8080 --workers 4
 ```
 
-服务启动后访问：http://localhost:8000/docs 查看 API 文档
+服务启动后访问：http://localhost:8080/docs 查看 API 文档
 
 ## API 接口
 
@@ -82,57 +82,33 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 
 健康检查接口。
 
-## 与 ZLMediaKit 配合使用
-
-### 工作流程
-
-1. **用户上传歌曲** → Python 服务保存到 `../music/` 目录
-2. **生成歌词** → Python 服务调用 Whisper 生成 LRC 文件
-3. **在线播放** → Python 服务将音频文件推流到 ZLMediaKit
-4. **返回歌词** → 如果歌词已生成，返回给客户端
-
-### 推流到 ZLMediaKit
-
-```python
-# 在 main.py 中添加推流功能
-def push_to_zlm(audio_path: str, song_id: str):
-    """将音频文件推流到 ZLMediaKit"""
-    import subprocess
-    
-    # 使用 ffmpeg 推流
-    cmd = [
-        "ffmpeg",
-        "-re",
-        "-i", audio_path,
-        "-acodec", "aac",
-        "-ar", "44100",
-        "-ab", "128k",
-        "-f", "flv",
-        f"rtmp://127.0.0.1:1935/live/music/{song_id}"
-    ]
-    
-    subprocess.Popen(cmd)
-```
-
-### Seek 功能实现
-
-客户端拖动进度条时，需要向服务器发送 seek 请求：
-
-```python
-# 在 main.py 中添加 seek 接口
-@app.post("/seek")
-async def seek(song_id: str, timestamp: float):
-    """Seek 到指定时间点"""
-    # 通知 ZLMediaKit 从指定时间开始播放
-    # 这需要 ZLMediaKit 支持相应的 API
-    
-    # 更新当前播放位置
-    # ...
-    
-    return {"status": "success", "timestamp": timestamp}
-```
-
 ## 配置说明
+
+### config.ini 配置文件
+
+```ini
+[api]
+secret=your_secret_key
+
+[general]
+host=0.0.0.0  # 生产环境改为 0.0.0.0 允许外部访问
+http_port=8080
+
+[whisper]
+model_size=base
+model_dir=./models
+
+[lyrics]
+merge_max_gap=0.12
+merge_min_length=3
+enabled=true
+```
+
+**上线部署时需修改：**
+- `general/host`：生产环境改为 `0.0.0.0` 允许外部访问
+- `api/secret`：修改为强随机密钥
+
+### 环境变量（可选）
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
@@ -140,7 +116,7 @@ async def seek(song_id: str, timestamp: float):
 | LYRICS_DIR | lyrics/ | 歌词存储目录 |
 | MUSIC_DIR | ../music/ | 音乐文件目录 |
 | MAX_FILE_SIZE | 500MB | 最大文件大小 |
-| MAX_DURATION | 10分钟 | 最大处理时长 |
+| MAX_DURATION | 10 分钟 | 最大处理时长 |
 
 ## 注意事项
 
@@ -148,6 +124,7 @@ async def seek(song_id: str, timestamp: float):
 2. 建议使用 GPU 加速以提高转录速度
 3. 长音频处理可能需要较长时间，请耐心等待
 4. 确保 ffmpeg 已正确安装并添加到系统 PATH
+5. 生产环境部署时请修改 `config.ini` 中的 `host` 为 `0.0.0.0`
 
 ## 可选：人声分离
 

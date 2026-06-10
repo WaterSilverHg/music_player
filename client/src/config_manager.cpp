@@ -26,23 +26,25 @@ QString ConfigManager::configFilePath() const {
 QString ConfigManager::defaultConfigContent() const {
     return QString(
         "[server]\n"
-        "host=127.0.0.1\n"
-        "http_port=8080\n"
+        "host=%1\n"
+        "http_port=%2\n"
         "rtsp_port=554\n"
-        "lyrics_port=8000\n"
+        "lyrics_port=%3\n"
         "\n"
         "[local]\n"
         "music_dir=./music\n"
         "auto_scan=true\n"
-    );
+    ).arg(DefaultServerConfig::DEFAULT_API_HOST)
+     .arg(DefaultServerConfig::DEFAULT_API_PORT)
+     .arg(DefaultServerConfig::DEFAULT_LYRICS_PORT);
 }
 
 void ConfigManager::parseIniContent(const QString& content) {
     // 设置默认值（仅当配置文件中未指定时使用）
-    server.host = "127.0.0.1";
-    server.httpPort = 8080;
+    server.host = DefaultServerConfig::DEFAULT_API_HOST;
+    server.httpPort = DefaultServerConfig::DEFAULT_API_PORT;
     server.rtspPort = 554;
-    server.lyricsPort = 8080;
+    server.lyricsPort = DefaultServerConfig::DEFAULT_LYRICS_PORT;
     local.musicDir = "./music";
     local.autoScan = true;
 

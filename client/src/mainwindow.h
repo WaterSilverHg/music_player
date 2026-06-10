@@ -123,7 +123,6 @@ private:
 
     // 播放失败保护
     int consecutivePlayFailures = 0;  // 连续播放失败次数
-    const int MAX_CONSECUTIVE_FAILURES = 3;  // 最大连续失败次数
     bool isHandlingError = false;     // 正在处理播放错误（防止竞态）
 
     // 搜索控件

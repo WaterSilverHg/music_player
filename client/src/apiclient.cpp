@@ -31,8 +31,8 @@ void ApiClient::init(const QString& baseUrl) {
     while (m_baseUrl.endsWith('/')) m_baseUrl.chop(1);
     qDebug() << "[ApiClient] Initialized, base URL:" << m_baseUrl;
 
-    // 启动心跳（10 秒间隔，降低服务器负载）
-    m_heartbeatTimer->start(10000);
+    // 启动心跳
+    m_heartbeatTimer->start(DefaultServerConfig::HEARTBEAT_INTERVAL);
     checkStatus();
 }
 
