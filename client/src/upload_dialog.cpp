@@ -13,12 +13,14 @@ UploadDialog::UploadDialog(QWidget *parent) :
     // 固定窗口大小
     setFixedSize(size());
     
-    // 连接信号
-    connect(ui->browseFileButton, &QPushButton::clicked, this, &UploadDialog::on_browseFileButton_clicked);
-    connect(ui->browseCoverButton, &QPushButton::clicked, this, &UploadDialog::on_browseCoverButton_clicked);
-    connect(ui->uploadButton, &QPushButton::clicked, this, &UploadDialog::on_uploadButton_clicked);
-    connect(ui->cancelButton, &QPushButton::clicked, this, &UploadDialog::on_cancelButton_clicked);
-    connect(ui->filePathEdit, &QLineEdit::textChanged, this, &UploadDialog::updateUploadButtonState);
+    // 使用 Qt::UniqueConnection 防止重复连接
+    // Qt 的 connectSlotsByName 会自动连接 on_<objectName>_clicked() 槽函数
+    // 使用 UniqueConnection 确保不会重复连接
+    //connect(ui->browseFileButton, &QPushButton::clicked, this, &UploadDialog::on_browseFileButton_clicked, Qt::UniqueConnection);
+    //connect(ui->browseCoverButton, &QPushButton::clicked, this, &UploadDialog::on_browseCoverButton_clicked, Qt::UniqueConnection);
+    //connect(ui->uploadButton, &QPushButton::clicked, this, &UploadDialog::on_uploadButton_clicked, Qt::UniqueConnection);
+    //connect(ui->cancelButton, &QPushButton::clicked, this, &UploadDialog::on_cancelButton_clicked, Qt::UniqueConnection);
+    connect(ui->filePathEdit, &QLineEdit::textChanged, this, &UploadDialog::updateUploadButtonState, Qt::UniqueConnection);
     
     // 初始状态
     updateUploadButtonState();
@@ -69,13 +71,6 @@ void UploadDialog::on_browseCoverButton_clicked()
     if (!coverPath.isEmpty()) {
         ui->coverPathEdit->setText(coverPath);
         m_uploadInfo.coverPath = coverPath;
-        
-        // 显示封面预览
-        QPixmap pixmap(coverPath);
-        if (!pixmap.isNull()) {
-            ui->coverPreview->setPixmap(pixmap.scaled(ui->coverPreview->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-            ui->coverPreview->setStyleSheet("border: 2px solid #7C6AEE; border-radius: 12px;");
-        }
     }
 }
 
@@ -104,7 +99,6 @@ void UploadDialog::on_uploadButton_clicked()
     m_uploadInfo.title = ui->titleEdit->text().trimmed();
     m_uploadInfo.artist = ui->artistEdit->text().trimmed();
     m_uploadInfo.album = ui->albumEdit->text().trimmed();
-    m_uploadInfo.comment = ui->commentEdit->toPlainText().trimmed();
     
     // 如果标题为空，使用文件名
     if (m_uploadInfo.title.isEmpty()) {

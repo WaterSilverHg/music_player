@@ -163,13 +163,6 @@ add_custom_command(TARGET MusicPlayerClient POST_BUILD
 )
 
 add_custom_command(TARGET MusicPlayerClient POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/bin/debug/config.ini"
-        "$<TARGET_FILE_DIR:MusicPlayerClient>/config.ini"
-    COMMENT "Copying config.ini..."
-)
-
-add_custom_command(TARGET MusicPlayerClient POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
         "$<TARGET_FILE_DIR:MusicPlayerClient>/playlists"
     COMMENT "Creating playlists directory..."

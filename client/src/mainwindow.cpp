@@ -1862,14 +1862,20 @@ QString MainWindow::findPathByDisplayName(const Playlist* playlist, const QStrin
 
 void MainWindow::on_actionUpload_File_triggered()
 {
+    qDebug() << "[MainWindow] on_actionUpload_File_triggered called";
+    
     // 显示上传对话框
     UploadDialog dialog(this);
+    qDebug() << "[MainWindow] Showing upload dialog";
     if (dialog.exec() == QDialog::Accepted) {
         UploadInfo info = dialog.getUploadInfo();
+        qDebug() << "[MainWindow] Upload dialog accepted, file:" << info.filePath;
         
         // 调用 API 上传文件（包含额外信息）
         ApiClient::instance()->uploadFile(info.filePath, info.title, info.artist, info.album, info.coverPath);
-        statusBar()->showMessage(tr("正在上传: %1").arg(QFileInfo(info.filePath).fileName()));
+        statusBar()->showMessage(tr("正在上传：%1").arg(QFileInfo(info.filePath).fileName()));
+    } else {
+        qDebug() << "[MainWindow] Upload dialog rejected";
     }
 }
 

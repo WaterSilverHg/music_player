@@ -6,22 +6,45 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>520</height>
+    <width>450</width>
+    <height>835</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>450</width>
+    <height>835</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>450</width>
+    <height>835</height>
+   </size>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::DefaultContextMenu</enum>
+  </property>
   <property name="windowTitle">
-   <string>上传音乐</string>
+   <string/>
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog { background-color: #13102A; }
-QLabel { color: #8E88B0; }
+QLabel { color: #8E88B0; font-size: 14px; }
 QLineEdit { 
     background-color: #1A1635; 
     border: 1px solid #2A2555; 
     border-radius: 8px; 
-    padding: 8px; 
+    padding: 10px; 
     color: white;
+    font-size: 14px;
+    min-height: 36px;
 }
 QLineEdit:focus { 
     border-color: #7C6AEE; 
@@ -30,9 +53,11 @@ QPushButton {
     background-color: #7C6AEE; 
     border: none; 
     border-radius: 8px; 
-    padding: 8px 20px; 
+    padding: 10px 24px; 
     color: white; 
     font-weight: bold;
+    font-size: 14px;
+    min-height: 36px;
 }
 QPushButton:hover { 
     background-color: #8B7AE6; 
@@ -44,26 +69,36 @@ QPushButton:disabled {
     background-color: #3A3555; 
     color: #605A80;
 }
-QTextEdit { 
-    background-color: #1A1635; 
+QGroupBox { 
     border: 1px solid #2A2555; 
-    border-radius: 8px; 
-    padding: 8px; 
-    color: white;
+    border-radius: 10px; 
+    margin-top: 15px; 
+    padding-top: 5px;
 }
-QTextEdit:focus { 
-    border-color: #7C6AEE; 
+QGroupBox::title { 
+    color: #7C6AEE; 
+    subcontrol-origin: margin; 
+    left: 12px; 
+    padding: 0 8px; 
+    font-weight: bold; 
+    font-size: 14px;
 }
 </string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>20</number>
+   </property>
+   <property name="margin" stdset="0">
+    <number>25</number>
+   </property>
    <item>
     <widget class="QLabel" name="titleLabel">
+     <property name="styleSheet">
+      <string notr="true">font-size: 24pt; font-weight: bold; color: #7C6AEE;</string>
+     </property>
      <property name="text">
       <string>🎵 上传音乐</string>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">font-size: 20pt; font-weight: bold; color: #7C6AEE;</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -75,11 +110,13 @@ QTextEdit:focus {
      <property name="title">
       <string>音乐文件</string>
      </property>
-     <property name="styleSheet">
-      <string notr="true">QGroupBox { border: 1px solid #2A2555; border-radius: 8px; margin-top: 10px; }
-QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; padding: 0 5px; }</string>
-     </property>
      <layout class="QVBoxLayout" name="fileLayout">
+      <property name="spacing">
+       <number>12</number>
+      </property>
+      <property name="margin" stdset="0">
+       <number>15</number>
+      </property>
       <item>
        <widget class="QLineEdit" name="filePathEdit">
         <property name="readOnly">
@@ -103,20 +140,22 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
    <item>
     <widget class="QGroupBox" name="coverGroup">
      <property name="title">
-      <string>封面图片</string>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QGroupBox { border: 1px solid #2A2555; border-radius: 8px; margin-top: 10px; }
-QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; padding: 0 5px; }</string>
+      <string>封面图片（可选）</string>
      </property>
      <layout class="QVBoxLayout" name="coverLayout">
+      <property name="spacing">
+       <number>12</number>
+      </property>
+      <property name="margin" stdset="0">
+       <number>15</number>
+      </property>
       <item>
        <widget class="QLineEdit" name="coverPathEdit">
         <property name="readOnly">
          <bool>true</bool>
         </property>
         <property name="placeholderText">
-         <string>（可选）选择封面图片...</string>
+         <string>选择封面图片...</string>
         </property>
        </widget>
       </item>
@@ -124,22 +163,6 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
        <widget class="QPushButton" name="browseCoverButton">
         <property name="text">
          <string>🖼️ 选择封面</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="coverPreview">
-        <property name="text">
-         <string>🖼️</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">font-size: 48px; background-color: #1A1635; border: 2px dashed #2A2555; border-radius: 12px; padding: 20px; text-align: center;</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-        <property name="scaledContents">
-         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -151,11 +174,19 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
      <property name="title">
       <string>歌曲信息</string>
      </property>
-     <property name="styleSheet">
-      <string notr="true">QGroupBox { border: 1px solid #2A2555; border-radius: 8px; margin-top: 10px; }
-QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; padding: 0 5px; }</string>
-     </property>
      <layout class="QFormLayout" name="infoLayout">
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+      </property>
+      <property name="horizontalSpacing">
+       <number>12</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>12</number>
+      </property>
+      <property name="margin" stdset="0">
+       <number>15</number>
+      </property>
       <item row="0" column="0">
        <widget class="QLabel" name="titleLabel_2">
         <property name="text">
@@ -165,6 +196,12 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
       </item>
       <item row="0" column="1">
        <widget class="QLineEdit" name="titleEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="placeholderText">
          <string>输入歌曲名称</string>
         </property>
@@ -179,6 +216,12 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
       </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="artistEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="placeholderText">
          <string>输入歌手名称</string>
         </property>
@@ -193,25 +236,14 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
       </item>
       <item row="2" column="1">
        <widget class="QLineEdit" name="albumEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="placeholderText">
          <string>输入专辑名称</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="commentLabel">
-        <property name="text">
-         <string>备注</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QTextEdit" name="commentEdit">
-        <property name="placeholderText">
-         <string>（可选）添加备注信息...</string>
-        </property>
-        <property name="maximumHeight">
-         <number>60</number>
         </property>
        </widget>
       </item>
@@ -220,8 +252,20 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
    </item>
    <item>
     <layout class="QHBoxLayout" name="buttonLayout">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <property name="margin" stdset="0">
+      <number>0</number>
+     </property>
      <item>
       <widget class="QPushButton" name="cancelButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
         <string>取消</string>
        </property>
@@ -229,6 +273,12 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
      </item>
      <item>
       <widget class="QPushButton" name="uploadButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
         <string>🚀 上传</string>
        </property>
@@ -241,7 +291,7 @@ QGroupBox::title { color: #7C6AEE; subcontrol-origin: margin; left: 10px; paddin
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="10" margin="20"/>
+ <layoutdefault spacing="20" margin="25"/>
  <resources/>
  <connections/>
 </ui>

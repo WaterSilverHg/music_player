@@ -150,12 +150,15 @@ def init_whisper(model_size: str = "base") -> bool:
         if whisper_model is None or getattr(whisper_model, 'model_size', None) != model_size:
             print(f"[{datetime.now()}] Loading Whisper model: {model_size}")
             try:
+                print(f"[{datetime.now()}] Loading Whisper model: {model_size} from {WHISPER_MODEL_DIR}")
                 whisper_model = whisper.load_model(model_size, download_root=str(WHISPER_MODEL_DIR))
                 whisper_model.model_size = model_size  # 记录当前模型大小
                 print(f"[{datetime.now()}] Whisper model loaded successfully")
                 return True
             except Exception as e:
+                import traceback
                 print(f"[{datetime.now()}] Failed to load Whisper model: {e}")
+                print(f"[{datetime.now()}] Full error traceback: {traceback.format_exc()}")
                 return False
     return True
 
@@ -709,15 +712,22 @@ if __name__ == "__main__":
         },
     }
     
-    # 注释掉预加载，让模型在首次使用时根据 model_size 参数动态加载
-    # 这样可以确保使用正确的模型（如 small）而不是预加载的 base
-    # if WHISPER_AVAILABLE:
-    #     try:
-    #         init_whisper("base")
-    #     except Exception as e:
-    #         print(f"[{datetime.now()}] Warning: Could not preload Whisper model: {e}")
-    #         print(f"[{datetime.now()}] Model will be loaded on first request")
-    # else:
-    #     print(f"[{datetime.now()}] Warning: Whisper not installed, lyrics generation will fail")
+    # 启动时预加载 Whisper 模型
+    if WHISPER_AVAILABLE and LYRICS_ENABLED:
+        print(f"[{datetime.now()}] Preloading Whisper model: {WHISPER_MODEL_SIZE}")
+        try:
+            if init_whisper(WHISPER_MODEL_SIZE):
+                print(f"[{datetime.now()}] Whisper model loaded successfully")
+            else:
+                print(f"[{datetime.now()}] Warning: Failed to preload Whisper model")
+                print(f"[{datetime.now()}] Lyrics generation will be disabled")
+        except Exception as e:
+            print(f"[{datetime.now()}] Warning: Could not preload Whisper model: {e}")
+            print(f"[{datetime.now()}] Lyrics generation will be disabled")
+    else:
+        if not WHISPER_AVAILABLE:
+            print(f"[{datetime.now()}] Warning: Whisper not installed, lyrics generation will fail")
+        else:
+            print(f"[{datetime.now()}] Lyrics generation is disabled in config")
     
     uvicorn.run(app, host="0.0.0.0", port=HTTP_PORT, log_config=log_config)
